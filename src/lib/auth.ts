@@ -67,12 +67,14 @@ export async function getAccessToken(): Promise<string> {
   const m = getMsal();
   const account = getActiveAccount();
   if (!account) throw new Error('Niet ingelogd');
+  // Vraag uitsluitend de Function-scope aan, geen Graph mengen.
+  const apiOnly = [config.apiScope];
   try {
-    const res = await m.acquireTokenSilent({ scopes: scopes(), account });
+    const res = await m.acquireTokenSilent({ scopes: apiOnly, account });
     return res.accessToken;
   } catch (e) {
     if (e instanceof InteractionRequiredAuthError) {
-      const res = await m.acquireTokenPopup({ scopes: scopes(), account });
+      const res = await m.acquireTokenPopup({ scopes: apiOnly, account });
       return res.accessToken;
     }
     throw e;
