@@ -1,0 +1,23 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "FUNCTIONS_EXTENSION_VERSION": "~4",
+    "WEBSITE_NODE_DEFAULT_VERSION": "~20",
+
+    "TARGET_TENANT_ID": "bf2f39aa-496c-406a-940c-41e73a851d39",
+    "APP_CLIENT_ID": "00000000-0000-0000-0000-000000000000",
+    "APP_CLIENT_SECRET": "REPLACE_ME_OR_USE_CERT",
+
+    "API_AUDIENCE": "api://00000000-0000-0000-0000-000000000000",
+    "DL_EMAIL": "leden@example.com",
+    "EXCHANGE_ORG": "contoso.onmicrosoft.com",
+
+    "ALLOWED_ORIGINS": "http://localhost:3000,https://contact.nietvooriedereen.nl"
+  },
+  "Host": {
+    "LocalHttpPort": 7071,
+    "CORS": "*"
+  }
+}

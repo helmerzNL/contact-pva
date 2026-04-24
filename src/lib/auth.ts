@@ -1,7 +1,11 @@
 'use client';
 
 import { PublicClientApplication, type AccountInfo, type AuthenticationResult, InteractionRequiredAuthError } from '@azure/msal-browser';
-import { config, GRAPH_SCOPES } from './config';
+import { config, getApiScopes } from './config';
+
+function scopes(): string[] {
+  return getApiScopes(config.apiScope);
+}
 
 let msalInstance: PublicClientApplication | null = null;
 let initPromise: Promise<void> | null = null;
@@ -49,7 +53,7 @@ export function getActiveAccount(): AccountInfo | null {
 
 export async function login(): Promise<AuthenticationResult> {
   const m = getMsal();
-  const result = await m.loginPopup({ scopes: GRAPH_SCOPES, prompt: 'select_account' });
+  const result = await m.loginPopup({ scopes: scopes(), prompt: 'select_account' });
   m.setActiveAccount(result.account);
   return result;
 }
@@ -64,11 +68,11 @@ export async function getAccessToken(): Promise<string> {
   const account = getActiveAccount();
   if (!account) throw new Error('Niet ingelogd');
   try {
-    const res = await m.acquireTokenSilent({ scopes: GRAPH_SCOPES, account });
+    const res = await m.acquireTokenSilent({ scopes: scopes(), account });
     return res.accessToken;
   } catch (e) {
     if (e instanceof InteractionRequiredAuthError) {
-      const res = await m.acquireTokenPopup({ scopes: GRAPH_SCOPES, account });
+      const res = await m.acquireTokenPopup({ scopes: scopes(), account });
       return res.accessToken;
     }
     throw e;

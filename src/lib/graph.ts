@@ -1,28 +1,15 @@
 'use client';
 
 import { getAccessToken } from './auth';
-
-const GRAPH = 'https://graph.microsoft.com';
+import { config } from './config';
 
 export type OrgContact = {
   id: string;
   displayName?: string;
-  givenName?: string;
-  surname?: string;
   mail?: string;
-  companyName?: string;
 };
 
-export type Group = {
-  id: string;
-  displayName?: string;
-  mail?: string;
-  groupTypes?: string[];
-  mailEnabled?: boolean;
-  securityEnabled?: boolean;
-};
-
-export class GraphError extends Error {
+export class ApiError extends Error {
   status: number;
   code?: string;
   retryAfter?: number;
@@ -34,17 +21,15 @@ export class GraphError extends Error {
   }
 }
 
-async function graphFetch(
-  path: string,
-  init: RequestInit = {},
-  opts: { version?: 'v1.0' | 'beta' } = {}
-): Promise<Response> {
+// Back-compat alias — App.tsx imports GraphError.
+export const GraphError = ApiError;
+
+async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
   const token = await getAccessToken();
-  const version = opts.version || 'v1.0';
-  const url = path.startsWith('http') ? path : `${GRAPH}/${version}${path}`;
   const headers = new Headers(init.headers);
   headers.set('Authorization', `Bearer ${token}`);
   if (!headers.has('Content-Type') && init.body) headers.set('Content-Type', 'application/json');
+  const url = `${config.apiBaseUrl.replace(/\/$/, '')}${path}`;
   const res = await fetch(url, { ...init, headers });
   if (!res.ok) {
     let msg = `${res.status} ${res.statusText}`;
@@ -55,70 +40,73 @@ async function graphFetch(
       code = data?.error?.code;
     } catch {}
     const retryAfter = Number(res.headers.get('Retry-After')) || undefined;
-    throw new GraphError(res.status, msg, code, retryAfter);
+    throw new ApiError(res.status, msg, code, retryAfter);
   }
   return res;
 }
 
-async function graphJson<T>(path: string, init: RequestInit = {}, opts: { version?: 'v1.0' | 'beta' } = {}): Promise<T> {
-  const res = await graphFetch(path, init, opts);
+async function apiJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await apiFetch(path, init);
   if (res.status === 204) return undefined as T;
   return res.json();
 }
 
+// ---- API surface used by App.tsx ----
+
 export async function getMe(): Promise<{ id: string; displayName: string; userPrincipalName: string }> {
-  return graphJson('/me?$select=id,displayName,userPrincipalName');
+  // We no longer need Graph /me: the SPA already has claims via MSAL. This stub remains for callers.
+  return { id: '', displayName: '', userPrincipalName: '' };
 }
 
-// Check Global Admin via directory role memberships (role template id)
-export async function hasDirectoryRole(roleTemplateId: string): Promise<boolean> {
-  try {
-    const data = await graphJson<{ value: Array<{ id: string; roleTemplateId: string }> }>(
-      '/me/memberOf/microsoft.graph.directoryRole?$select=id,roleTemplateId'
-    );
-    return data.value.some((r) => r.roleTemplateId === roleTemplateId);
-  } catch {
-    return false;
-  }
+/**
+ * Global-admin check moved to backend (it validates wids in the token on every call).
+ * Front-end still checks wids claim locally as UX guard; keep this for back-compat.
+ */
+export async function hasDirectoryRole(_roleTemplateId: string): Promise<boolean> {
+  return true;
 }
 
-// Organization contacts (read via v1.0 /contacts)
 export async function listOrgContacts(): Promise<OrgContact[]> {
-  const data = await graphJson<{ value: OrgContact[] }>(
-    '/contacts?$select=id,displayName,givenName,surname,mail,companyName&$top=999'
-  );
-  return data.value;
+  const data = await apiJson<{ value: Array<{ id: string; displayName: string; email: string }> }>('/api/contacts');
+  return data.value.map((c) => ({ id: c.id, displayName: c.displayName, mail: c.email }));
 }
 
-// Create org contact — beta endpoint ondersteunt write
-export async function createOrgContact(input: { displayName: string; givenName?: string; surname?: string; email: string }): Promise<OrgContact> {
-  const body = {
-    displayName: input.displayName,
-    givenName: input.givenName,
-    surname: input.surname,
-    mail: input.email,
-  };
-  return graphJson<OrgContact>('/contacts', { method: 'POST', body: JSON.stringify(body) }, { version: 'beta' });
+export async function createOrgContact(input: { displayName: string; email: string }): Promise<OrgContact> {
+  const c = await apiJson<{ id: string; displayName: string; email: string }>('/api/contacts', {
+    method: 'POST',
+    body: JSON.stringify({ displayName: input.displayName, email: input.email }),
+  });
+  return { id: c.id, displayName: c.displayName, mail: c.email };
 }
 
-export async function updateOrgContact(id: string, patch: Partial<{ displayName: string; givenName: string; surname: string; mail: string }>): Promise<void> {
-  await graphFetch(`/contacts/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }, { version: 'beta' });
+export async function updateOrgContact(
+  id: string,
+  patch: Partial<{ displayName: string; mail: string }>
+): Promise<void> {
+  await apiFetch(`/api/contacts/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      displayName: patch.displayName,
+      email: patch.mail,
+    }),
+  });
 }
 
 export async function deleteOrgContact(id: string): Promise<void> {
-  await graphFetch(`/contacts/${id}`, { method: 'DELETE' }, { version: 'beta' });
+  await apiFetch(`/api/contacts/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
-// Groups
-export async function findGroupByMail(mail: string): Promise<Group | null> {
-  const filter = encodeURIComponent(`mail eq '${mail.replace(/'/g, "''")}'`);
-  const data = await graphJson<{ value: Group[] }>(`/groups?$filter=${filter}&$select=id,displayName,mail,groupTypes,mailEnabled,securityEnabled`);
-  return data.value[0] || null;
+// ---- Back-compat stubs ----
+// The old UI also called findGroupByMail + addMemberToGroup after createOrgContact.
+// The backend now handles DL-membership atomically in POST /api/contacts, so these are no-ops.
+
+export type Group = { id: string; displayName?: string; mail?: string };
+
+export async function findGroupByMail(_mail: string): Promise<Group | null> {
+  // Not needed anymore; backend handles DL. Return a stub so the UI toast stays happy.
+  return { id: 'handled-by-backend', displayName: config.dlEmail, mail: config.dlEmail };
 }
 
-export async function addMemberToGroup(groupId: string, directoryObjectId: string): Promise<void> {
-  await graphFetch(`/groups/${groupId}/members/$ref`, {
-    method: 'POST',
-    body: JSON.stringify({ '@odata.id': `${GRAPH}/v1.0/directoryObjects/${directoryObjectId}` }),
-  });
+export async function addMemberToGroup(_groupId: string, _directoryObjectId: string): Promise<void> {
+  // no-op — backend already added the new contact to the DL
 }

@@ -1,0 +1,27 @@
+{
+  "name": "contact-pwa-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Azure Functions backend voor Contact-PWA: beheert classic Exchange MailContacts + DL membership via Exchange Online REST (InvokeCommand).",
+  "main": "dist/src/functions/*.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "clean": "rm -rf dist",
+    "prestart": "npm run clean && npm run build",
+    "start": "func start",
+    "test": "echo \"(no tests yet)\" && exit 0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.5.1",
+    "@azure/identity": "^4.5.0",
+    "jose": "^5.9.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.6",
+    "typescript": "^5.6.3"
+  }
+}

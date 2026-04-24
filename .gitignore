@@ -7,3 +7,7 @@ out
 .DS_Store
 .vscode
 .idea
+# backend
+backend/node_modules
+backend/dist
+backend/local.settings.json

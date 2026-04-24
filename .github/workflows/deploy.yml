@@ -21,6 +21,8 @@ jobs:
       NEXT_PUBLIC_CLIENT_ID: ${{ vars.NEXT_PUBLIC_CLIENT_ID }}
       NEXT_PUBLIC_TENANT_ID: ${{ vars.NEXT_PUBLIC_TENANT_ID }}
       NEXT_PUBLIC_DL_EMAIL: ${{ vars.NEXT_PUBLIC_DL_EMAIL }}
+      NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+      NEXT_PUBLIC_API_SCOPE: ${{ vars.NEXT_PUBLIC_API_SCOPE }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
