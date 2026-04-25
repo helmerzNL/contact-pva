@@ -186,7 +186,7 @@ export default function App() {
         title="Contactbeheer"
         body={
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Inloggen met je Microsoft 365 Global Admin account.</p>
+            <p className="text-sm text-muted-foreground">Inloggen met je Microsoft 365-account.</p>
             <Button onClick={handleLogin} className="w-full">Inloggen met Microsoft</Button>
           </div>
         }
@@ -215,10 +215,10 @@ export default function App() {
     return (
       <CenterMessage
         icon={<AlertTriangle className="h-8 w-8 text-destructive" />}
-        title="Geen Global Admin"
+        title="Geen toegang"
         body={
           <div className="space-y-3 text-sm">
-            <p>Alleen Global Administrators hebben toegang.</p>
+            <p>Je account heeft geen toegang tot deze applicatie.</p>
             <Button variant="outline" onClick={handleLogout}>Uitloggen</Button>
           </div>
         }

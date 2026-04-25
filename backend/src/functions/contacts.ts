@@ -1,5 +1,5 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { preflight, json, errorResponse, ApiError } from '../lib/http.js';
+import { preflight, json, errorResponse, ApiError, corsHeaders } from '../lib/http.js';
 import { verifyUserToken } from '../lib/verifyUserToken.js';
 import { assertEnv } from '../lib/env.js';
 import {
@@ -53,7 +53,7 @@ async function handler(req: HttpRequest, ctx: InvocationContext): Promise<HttpRe
 
     if (method === 'DELETE' && id) {
       await deleteMailContact(id, ctx);
-      return json(req, 204, null);
+      return { status: 204, headers: corsHeaders(req) };
     }
 
     throw new ApiError(405, 'method_not_allowed', `Method ${method} not allowed on this route`);

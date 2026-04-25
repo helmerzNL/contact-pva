@@ -24,7 +24,7 @@ function normalize(raw: RawMailContact): MailContact {
   const ext = raw.ExternalEmailAddress || '';
   const stripped = ext.replace(/^SMTP:/i, '');
   return {
-    id: raw.Guid || raw.Identity || raw.Name || '',
+    id: raw.Alias || raw.Guid || raw.Identity || raw.Name || '',
     displayName: raw.DisplayName || raw.Name || '',
     email: raw.PrimarySmtpAddress || stripped || '',
     externalEmailAddress: stripped || undefined,
