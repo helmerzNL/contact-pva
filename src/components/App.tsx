@@ -187,7 +187,7 @@ export default function App() {
         body={
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">Inloggen met je Microsoft 365-account.</p>
-            <Button onClick={handleLogin} className="w-full">Inloggen met Microsoft</Button>
+            <Button onClick={handleLogin} className="w-full">Inloggen</Button>
           </div>
         }
       />
