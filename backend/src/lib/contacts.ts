@@ -60,16 +60,28 @@ export async function createMailContactAndAddToDl(
   if (!createdRaw.length) throw new Error('New-MailContact returned empty result');
   const created = normalize(createdRaw[0]!);
 
-  // Step 2 — add to DL
-  await invoke(
-    'Add-DistributionGroupMember',
-    {
-      Identity: env.dlEmail,
-      Member: created.id || input.email,
-      BypassSecurityGroupManagerCheck: true,
-    },
-    ctx
-  );
+  // Step 2 — add to DL (retry: replication lag tussen Create en DL-add)
+  const memberId = created.email || input.email;
+  let lastErr: unknown;
+  for (let i = 0; i < 4; i++) {
+    try {
+      await invoke(
+        'Add-DistributionGroupMember',
+        {
+          Identity: env.dlEmail,
+          Member: memberId,
+          BypassSecurityGroupManagerCheck: true,
+        },
+        ctx
+      );
+      lastErr = undefined;
+      break;
+    } catch (e) {
+      lastErr = e;
+      await new Promise((r) => setTimeout(r, 2000 * (i + 1)));
+    }
+  }
+  if (lastErr) throw lastErr;
 
   return created;
 }

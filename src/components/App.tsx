@@ -229,12 +229,19 @@ export default function App() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 md:py-10">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Contactbeheer</h1>
-          <p className="text-sm text-muted-foreground">{userName} · DL: <code>{config.dlEmail}</code></p>
+        <div className="flex items-center gap-3">
+          <img src="./img/logo-ldwb.png" alt="Logo" className="h-12 object-contain" />
+          <div>
+            <h1 className="text-2xl font-semibold">Contactbeheer</h1>
+            <p className="text-sm text-muted-foreground">{userName} · v{process.env.NEXT_PUBLIC_APP_VERSION || '0.0.0'}</p>
+          </div>
         </div>
         <Button variant="outline" size="sm" onClick={handleLogout}><LogOut className="h-4 w-4" /> Uitloggen</Button>
       </header>
+
+      <div className="mb-3 text-sm text-muted-foreground">
+        Distributielijst: <code className="font-mono">{config.dlEmail}</code>
+      </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
         <div className="relative flex-1 min-w-[220px]">
@@ -309,14 +316,19 @@ function CenterLoader({ label, inline }: { label: string; inline?: boolean }) {
 }
 
 function CenterMessage({ icon, title, body }: { icon?: React.ReactNode; title: string; body: React.ReactNode }) {
+  const version = process.env.NEXT_PUBLIC_APP_VERSION || '0.0.0';
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <Card className="w-full max-w-md p-6 space-y-4">
+        <div className="flex justify-center">
+          <img src="./img/logo-ldwb.png" alt="Wijkvereniging Landgoed de Woldberg" className="h-20 object-contain" />
+        </div>
         <div className="flex items-center gap-3">
           {icon ?? <UserPlus className="h-6 w-6 text-primary" />}
           <h1 className="text-lg font-semibold">{title}</h1>
         </div>
         <div>{body}</div>
+        <p className="text-xs text-muted-foreground text-center pt-2 border-t">v{version}</p>
       </Card>
     </div>
   );

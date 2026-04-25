@@ -91,6 +91,15 @@ export async function invoke<T = unknown>(
     );
   }
 
-  const json = (await res.json()) as InvokeResult<T>;
+  // Some cmdlets (Remove-*, Add-DistributionGroupMember, Set-*) return empty bodies on success.
+  const text = await res.text();
+  if (!text || !text.trim()) return [];
+  let json: InvokeResult<T>;
+  try {
+    json = JSON.parse(text) as InvokeResult<T>;
+  } catch {
+    ctx.warn('exo_invoke_non_json', { cmdlet, sample: text.slice(0, 200) });
+    return [];
+  }
   return json.value || [];
 }

@@ -65,9 +65,12 @@ export async function verifyUserToken(req: HttpRequest, ctx: InvocationContext):
     throw new ApiError(403, 'wrong_tenant', 'Token is not from the expected tenant');
   }
 
-  const wids = Array.isArray(payload.wids) ? payload.wids : [];
-  if (!wids.includes(env.globalAdminRoleTemplateId)) {
-    throw new ApiError(403, 'not_global_admin', 'Global Administrator role required');
+  // Optional admin restriction: if ADMIN_OIDS is set, only those users; otherwise any tenant member.
+  const adminOids = (process.env.ADMIN_OIDS || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (adminOids.length > 0) {
+    if (!payload.oid || !adminOids.includes(payload.oid)) {
+      throw new ApiError(403, 'not_authorized', `User not in admin allowlist (oid=${payload.oid || 'none'})`);
+    }
   }
 
   return payload;
