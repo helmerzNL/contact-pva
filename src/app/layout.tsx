@@ -19,6 +19,8 @@ export const viewport: Viewport = {
   themeColor: '#0f172a',
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: 'cover',
 };
 
@@ -32,6 +34,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <Toaster richColors position="top-center" />
         <Script id="sw-register" strategy="afterInteractive">{`
+          ['gesturestart','gesturechange','gestureend'].forEach(function (t) {
+            document.addEventListener(t, function (e) { e.preventDefault(); });
+          });
+          document.addEventListener('touchmove', function (e) {
+            if (e.touches.length > 1) e.preventDefault();
+          }, { passive: false });
           if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
               navigator.serviceWorker.register('/sw.js').catch(() => {});

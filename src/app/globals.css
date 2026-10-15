@@ -30,6 +30,13 @@
     --border: 217 33% 22%;
   }
   html, body { height: 100%; }
+  /* App-feel: no pinch/double-tap zoom, no rubber-band, no tap flash. */
+  html {
+    touch-action: manipulation;
+    overscroll-behavior: none;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
   body {
     @apply bg-background text-foreground;
     font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
